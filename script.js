@@ -23,7 +23,7 @@ var questions = [
         studentAnswer: ""
     },
     {
-        text: "Which part of the below is the html element:\r\n<li id=" + '"' + "Tomatoes" + '"' + ">Tomatoes</li>",
+        text: "Which part of the below is the html element:" + "\r\n" + "<li id=" + '"' + "Tomatoes" + '"' + ">Tomatoes</li>",
         answers: ["li","id","Tomatoes","there's no element here"],
         correctAnswerIndex: 0,
         answeredCorrectly: false,
@@ -56,14 +56,16 @@ var questions = [
 let scores = [];
 let interval = "";
 let totalSeconds = 120;
+let currentQuestionIndex = 0;
+let currentScore = 0;
 
 //getters and setters for local storage
 let storeQuestions = function (questions) {
-    localStorage.setItem("questions",questions);
+    localStorage.setItem("questions",JSON.stringify(questions));
 }
 
 let getQuestions = function () {
-    return localStorage.getItem("questions");
+    return JSON.parse(localStorage.getItem("questions"));
 }
 
 let storeScores = function (scores) {
@@ -79,16 +81,20 @@ let stopTimer = function(){
   }
   
 let clearTimerTime = function(){
-    //clear the timer and default to 25 minutes
-    console.log("clearTimerTime");
+    //clear the timer and default to 2 minutes
   
-    minutesDisplay.textContent = "02";
-    secondsDisplay.textContent = "00";
+    $("#minutes").text("2");
+    $("#seconds").text("00");
     totalSeconds = 120;
     stopTimer();
 }
 
 let startQuiz = function () {
+    //show the question card
+    // $("#question-card").show();
+    $("#question-card").addClass("visible").removeClass("invisible");
+    //create the content for the question card using the first question (index 0)
+    createQuestionCardContent(getQuestionByIndex(0));
     interval = setInterval(function() {
         setTimerTime(totalSeconds);
         totalSeconds--;
@@ -96,12 +102,10 @@ let startQuiz = function () {
 }
 
 let setTimerTime = function(totalSeconds){
-    console.log("in setTimerTime");
-    //expecting total seconds
   
     secondsLeftover = zeroPad((totalSeconds % 60),2);
   
-    minutes = zeroPad((Math.floor(totalSeconds / 60)),2);
+    minutes = (Math.floor(totalSeconds / 60));
   
     $("#minutes").text(minutes);
     $("#seconds").text(secondsLeftover);
@@ -113,4 +117,99 @@ let zeroPad  = function(num, places) {
     return Array(+(zero > 0 && zero)).join("0") + num;
 }
 
+let nextQuestion = function(){
+    if ($(":checked")[0] === undefined) {
+        //if they havent picked an option alert them 
+        alert("you must pick at least one answer");
+        return;
+    }
+
+    //if they have answered the current question correctly add 1 to their score
+    if(questionAnsweredCorrectly(getQuestionByIndex(currentQuestionIndex))){
+        currentScore++;
+    }
+
+    currentQuestionIndex++;
+    nextQuestion = getQuestionByIndex(currentQuestionIndex);
+    console.log("nextQuestion");
+    console.log(nextQuestion);
+    if (nextQuestion !== undefined ) {
+        createQuestionCardContent(nextQuestion);    
+    } else {
+        endQuiz();
+    }
+    
+}
+
+let questionAnsweredCorrectly = function (currentQuestion) {
+    //by default return false
+    //the number part of the id of the radio buttons should match the correctAnswerIndex property on the question
+    var selectedAnswerIndex = $(":checked").attr("id").split("-")[1];
+    if (selectedAnswerIndex === currentQuestion.correctAnswerIndex.toString()) {
+        return true;
+    }
+    return false;
+}
+
+let postScore = function(score){
+    scoreRow = $("<h2>").append($("<p>").text(score.Initials))
+    $("high-scores-list").append()
+
+}
+
+let endQuiz = function () {
+    $("#question-card").addClass("invisible").removeClass("visible");
+    alert("you've finished the quiz!");
+    //need to show a dialog here to show the score and get the user to put in their initials
+    //would be good to record the time taken as well
+    clearTimerTime();
+    postScore(score);
+}
+
+let getQuestionByIndex = function (index) {
+    questions = getQuestions();
+    return questions[index];
+}
+
+let createQuestionCardContent = function (question) {
+    //set the question card text to the question   
+    //i got the newline escape stuff from the net https://stackoverflow.com/questions/4535888/jquery-text-and-newlines
+    var obj = $("#question-card-text").text(question.text);
+    obj.html(obj.html().replace(/\n/g,'<br/>'));
+
+    //clear the current answers
+    $("#question-answer-section").empty();
+
+    var i = 0;
+    console.log(question);
+    //for each answer in the question object create a radio button and label and append to the containing div
+    question.answers.forEach(answer => {
+        var div = $("<div>").addClass("form-group row mx-2 align-items-center");
+        var input = $("<input>").addClass("col-1").attr({
+            type: "radio",
+            id: "answer-" + i
+        });
+        var label = $("<label>").addClass("form-check-label col-11").attr({
+            for: "answer-" + i
+        });
+        label.text(answer);
+        div.append(input);
+        div.append(label);
+        $("#question-answer-section").append(div);
+        i++;
+    });
+
+}
+
+//initial setup listeners etc..
+let OnInit = function() {
+    storeQuestions(questions);
+    // $("#question-card").hide();
+    $("#question-card").addClass("invisible").removeClass("visible");
+}
+
 $("#start-quiz-button").on("click",startQuiz);
+
+$("#submit-question-button").on("click",nextQuestion);
+
+OnInit();
