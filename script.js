@@ -53,7 +53,9 @@ var questions = [
 ]
 
 //create an array of score objects. because we arent pre-populating the scores it will just be a blank array
-scores = []
+let scores = [];
+let interval = "";
+let totalSeconds = 120;
 
 //getters and setters for local storage
 let storeQuestions = function (questions) {
@@ -72,3 +74,43 @@ let getScores = function () {
     return localStorage.getItem("scores");
 }
 
+let stopTimer = function(){
+    clearInterval(interval);
+  }
+  
+let clearTimerTime = function(){
+    //clear the timer and default to 25 minutes
+    console.log("clearTimerTime");
+  
+    minutesDisplay.textContent = "02";
+    secondsDisplay.textContent = "00";
+    totalSeconds = 120;
+    stopTimer();
+}
+
+let startQuiz = function () {
+    interval = setInterval(function() {
+        setTimerTime(totalSeconds);
+        totalSeconds--;
+    },1000)
+}
+
+let setTimerTime = function(totalSeconds){
+    console.log("in setTimerTime");
+    //expecting total seconds
+  
+    secondsLeftover = zeroPad((totalSeconds % 60),2);
+  
+    minutes = zeroPad((Math.floor(totalSeconds / 60)),2);
+  
+    $("#minutes").text(minutes);
+    $("#seconds").text(secondsLeftover);
+}
+
+// taken from teh interwebs
+let zeroPad  = function(num, places) {
+    var zero = places - num.toString().length + 1;
+    return Array(+(zero > 0 && zero)).join("0") + num;
+}
+
+$("#start-quiz-button").on("click",startQuiz);
