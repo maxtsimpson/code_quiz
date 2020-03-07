@@ -57,7 +57,7 @@ let scores = [];
 let interval = "";
 let totalSeconds = 120;
 let currentQuestionIndex = 0;
-let currentScore = 0;
+let currentScoreNumber = 0;
 
 //getters and setters for local storage
 let storeQuestions = function (questions) {
@@ -69,8 +69,8 @@ let getQuestions = function () {
 }
 
 let storeScores = function(scores){
-    console.log("in storeScores");
-    console.log(scores);
+    
+    
     localStorage.setItem("scores",JSON.stringify(scores));
 }
 
@@ -105,8 +105,13 @@ let startQuiz = function () {
     createQuestionCardContent(getQuestionByIndex(0));
     interval = setInterval(function() {
         setTimerTime(totalSeconds);
+        if(totalSeconds === 0){
+            stopTimer();
+            endQuiz();
+        }
         totalSeconds--;
     },1000)
+    
 }
 
 let setTimerTime = function(totalSeconds){
@@ -134,13 +139,15 @@ let nextQuestion = function(){
 
     //if they have answered the current question correctly add 1 to their score
     if(questionAnsweredCorrectly(getQuestionByIndex(currentQuestionIndex))){
-        currentScore++;
+        currentScoreNumber++;
+    }else{
+        totalSeconds = totalSeconds - 10;
     }
 
     currentQuestionIndex++;
     nextQuestion = getQuestionByIndex(currentQuestionIndex);
-    console.log("nextQuestion");
-    console.log(nextQuestion);
+    
+    
     if (nextQuestion !== undefined ) {
         createQuestionCardContent(nextQuestion);    
     } else {
@@ -168,14 +175,16 @@ let postScores = function(scores){
     // <td>5</td> score 
     // <td>0:30</td> time taken
     // </tr>
-    console.log("in postScores");
-    console.log(scores);
+    
+    
 
     $("#score-table-body").empty();
 
-    scores.sort(function(a,b) {
-        return a.score - b.score
+    scores = scores.sort(function(a,b) {
+        return b.Score - a.Score
     });
+
+    console.log()
 
     let i = 0;
     scores.forEach(score => {
@@ -195,10 +204,10 @@ let postScores = function(scores){
 
 let calculateScore = function(){
 
-    currentScore = {
+    var currentScore = {
         Rank: 0, //this gets assigned a value in postScores
         Initials: getInitials(),
-        Score: currentScore,
+        Score: currentScoreNumber,
         TimeTaken: totalSeconds
     }
 
@@ -217,13 +226,14 @@ let endQuiz = function () {
     //would be good to record the time taken as well
     stopTimer();
     currentScore = calculateScore();
-    console.log("scores");
-    console.log(scores);
+    
+    
     scores.push(currentScore);
     storeScores(scores);
     clearTimerTime();
     postScores(scores);
     currentQuestionIndex = 0;
+    currentScoreNumber = 0;
 }
 
 let getQuestionByIndex = function (index) {
@@ -241,7 +251,7 @@ let createQuestionCardContent = function (question) {
     $("#question-answer-section").empty();
 
     var i = 0;
-    console.log(question);
+    
     //for each answer in the question object create a radio button and label and append to the containing div
     question.answers.forEach(answer => {
         var div = $("<div>").addClass("form-group row mx-2 align-items-center");
@@ -265,6 +275,8 @@ let resetQuiz = function(){
     stopTimer();
     clearTimerTime();
     $("#question-card").addClass("invisible").removeClass("visible");
+    currentScoreNumber = 0;
+    currentQuestionIndex = 0;
 }
 
 //initial setup listeners etc..
