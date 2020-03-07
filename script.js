@@ -68,12 +68,20 @@ let getQuestions = function () {
     return JSON.parse(localStorage.getItem("questions"));
 }
 
-let storeScores = function (scores) {
-    localStorage.setItem("scores",scores);
+let storeScores = function(scores){
+    console.log("in storeScores");
+    console.log(scores);
+    localStorage.setItem("scores",JSON.stringify(scores));
 }
 
 let getScores = function () {
-    return localStorage.getItem("scores");
+    var scores = JSON.parse(localStorage.getItem("scores"));
+    if (scores !== null) {
+        return scores;
+    } else {
+        return [];
+    }
+    // return JSON.parse(localStorage.getItem("scores"));
 }
 
 let stopTimer = function(){
@@ -151,10 +159,55 @@ let questionAnsweredCorrectly = function (currentQuestion) {
     return false;
 }
 
-let postScore = function(score){
-    scoreRow = $("<h2>").append($("<p>").text(score.Initials))
-    $("high-scores-list").append()
+let postScores = function(scores){
 
+    // i want to generate html like this:
+    // <tr>
+    // <th scope="row">1</th> Rank
+    // <td>MS</td> initials
+    // <td>5</td> score 
+    // <td>0:30</td> time taken
+    // </tr>
+    console.log("in postScores");
+    console.log(scores);
+
+    $("#score-table-body").empty();
+
+    scores.sort(function(a,b) {
+        return a.score - b.score
+    });
+
+    let i = 0;
+    scores.forEach(score => {
+        score.Rank = i + 1;
+        scoreRow = $("<tr>")
+        scoreRow.append($("<th>").text(score.Rank));
+        scoreRow.append($("<td>").text(score.Initials));
+        scoreRow.append($("<td>").text(score.Score)); //i know score.Score sucks but cant think of how else to put it
+        scoreRow.append($("<td>").text(score.TimeTaken));
+        
+        //append the table row to the table body
+        $("#score-table-body").append(scoreRow);
+        i++;
+    });
+
+}
+
+let calculateScore = function(){
+
+    currentScore = {
+        Rank: 0, //this gets assigned a value in postScores
+        Initials: getInitials(),
+        Score: currentScore,
+        TimeTaken: totalSeconds
+    }
+
+    return currentScore;
+}
+
+let getInitials = function() {
+    Initials = prompt("please enter your initials")
+    return Initials;
 }
 
 let endQuiz = function () {
@@ -162,8 +215,15 @@ let endQuiz = function () {
     alert("you've finished the quiz!");
     //need to show a dialog here to show the score and get the user to put in their initials
     //would be good to record the time taken as well
+    stopTimer();
+    currentScore = calculateScore();
+    console.log("scores");
+    console.log(scores);
+    scores.push(currentScore);
+    storeScores(scores);
     clearTimerTime();
-    postScore(score);
+    postScores(scores);
+    currentQuestionIndex = 0;
 }
 
 let getQuestionByIndex = function (index) {
@@ -201,9 +261,16 @@ let createQuestionCardContent = function (question) {
 
 }
 
+let resetQuiz = function(){
+    stopTimer();
+    clearTimerTime();
+    $("#question-card").addClass("invisible").removeClass("visible");
+}
+
 //initial setup listeners etc..
 let OnInit = function() {
     storeQuestions(questions);
+    scores = getScores();
     // $("#question-card").hide();
     $("#question-card").addClass("invisible").removeClass("visible");
 }
@@ -211,5 +278,6 @@ let OnInit = function() {
 $("#start-quiz-button").on("click",startQuiz);
 
 $("#submit-question-button").on("click",nextQuestion);
+$("#reset-quiz-button").on("click",resetQuiz);
 
 OnInit();
