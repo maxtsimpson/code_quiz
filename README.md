@@ -1,5 +1,5 @@
 You can find the working page here:
-https://maxtsimpson.github.io/hwweek4/index.html
+https://maxtsimpson.github.io/code_quiz/
 
 # 04 Web APIs: Code Quiz
 
